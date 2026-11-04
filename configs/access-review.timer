@@ -1,0 +1,8 @@
+[Unit]
+Description=Run Access Review collector every 5 minutes
+[Timer]
+OnBootSec=1min
+OnUnitInactiveSec=5min
+Unit=access-review.service
+[Install]
+WantedBy=timers.target

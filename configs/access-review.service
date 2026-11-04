@@ -1,0 +1,9 @@
+[Unit]
+Description=Access Review Linux Collector
+Wants=network-online.target
+After=network-online.target
+[Service]
+Type=oneshot
+User=root
+EnvironmentFile=/etc/access-review/agent.env
+ExecStart=/usr/bin/python3 /opt/access-review/linux_collector.py

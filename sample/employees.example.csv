@@ -1,0 +1,5 @@
+employee_id,full_name,department,employment_status,approved_admin,machine_id,username
+E001,Example Employee One,Engineering,active,true,linux01,developer01
+E001,Example Employee One,Engineering,active,true,win01,developer01
+E002,Example Employee Two,Finance,active,false,win02,finance01
+E003,Example Departed Employee,Operations,terminated,false,linux02,former01
