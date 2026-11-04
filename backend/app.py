@@ -10,7 +10,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from fastapi import FastAPI, Depends, HTTPException, Header, Response
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 DATABASE_URL = os.environ['DATABASE_URL']
@@ -20,10 +20,17 @@ security = HTTPBasic()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Schema is installed by PostgreSQL's init script before API starts.
+    schema_path = Path(__file__).parent / 'schema.sql'
+    if schema_path.exists():
+        with psycopg.connect(DATABASE_URL) as conn:
+            conn.execute(schema_path.read_text(encoding='utf-8'))
     yield
 
 app = FastAPI(title='Access Review MVP', docs_url=None, redoc_url=None, lifespan=lifespan)
+
+@app.get('/', include_in_schema=False)
+def root():
+    return RedirectResponse(url='/dashboard')
 
 class Event(BaseModel):
     event_uid: str = Field(min_length=1, max_length=240)
