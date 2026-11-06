@@ -78,9 +78,39 @@ def upsert_machine(conn, machine_id):
     conn.execute('''INSERT INTO machines(machine_id,os_type) VALUES (%s,%s)
       ON CONFLICT(machine_id) DO UPDATE SET last_seen=now()''', (machine_id,OS_TYPES[machine_id]))
 
+@app.get('/health')
 @app.get('/api/health')
 def health():
-    return {'status':'running'}
+    return {'status':'running', 'service':'accessreview-backend'}
+
+@app.get('/api/admin/summary')
+def admin_summary(x_admin_token: str | None = Header(default=None, alias='X-Admin-Token')):
+    expected = os.environ.get('ADMIN_API_TOKEN') or os.environ.get('ADMIN_PASSWORD')
+    if not expected or not x_admin_token or not secrets.compare_digest(expected.encode(), x_admin_token.encode()):
+        raise HTTPException(status_code=401, detail='Invalid admin token')
+    with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
+        rows = conn.execute('''
+            SELECT m.machine_id AS device_id,
+                   COUNT(e.id) AS event_count,
+                   MAX(e.occurred_at) AS last_event_utc
+            FROM machines m
+            LEFT JOIN security_events e ON e.machine_id = m.machine_id
+            GROUP BY m.machine_id
+            ORDER BY COUNT(e.id) DESC, m.machine_id ASC
+        ''').fetchall()
+        devices = []
+        for r in rows:
+            devices.append({
+                'device_id': r['device_id'],
+                'event_count': int(r['event_count']),
+                'last_event_utc': r['last_event_utc'].isoformat() if r['last_event_utc'] else None
+            })
+        snapshot_count = conn.execute('SELECT COUNT(*) AS c FROM accounts').fetchone()['c']
+    return {
+        'devices': devices,
+        'snapshots': int(snapshot_count),
+        'generated_at_utc': datetime.now(timezone.utc).isoformat()
+    }
 
 @app.post('/api/ingest/events')
 def ingest_events(batch: EventBatch, x_agent_key: str | None=Header(default=None)):

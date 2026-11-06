@@ -26,11 +26,23 @@ services:
       LINUX02_KEY: ${LINUX02_KEY:?Set LINUX02_KEY}
       ADMIN_USER: ${ADMIN_USER:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}
+      ADMIN_API_TOKEN: ${ADMIN_PASSWORD}
     expose:
       - "8000"
     depends_on:
       db:
         condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    environment:
+      API_UPSTREAM: api:8000
+      API_PROTOCOL: http
+    expose:
+      - "80"
+    depends_on:
+      - api
 
 volumes:
   postgres_data:
