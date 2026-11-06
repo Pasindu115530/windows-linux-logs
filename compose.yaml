@@ -29,6 +29,10 @@ services:
       ADMIN_API_TOKEN: ${ADMIN_PASSWORD}
     expose:
       - "8000"
+    networks:
+      default:
+        aliases:
+          - backend
     depends_on:
       db:
         condition: service_healthy
@@ -36,9 +40,6 @@ services:
   frontend:
     build: ./frontend
     restart: unless-stopped
-    environment:
-      API_UPSTREAM: api:8000
-      API_PROTOCOL: http
     expose:
       - "80"
     depends_on:
