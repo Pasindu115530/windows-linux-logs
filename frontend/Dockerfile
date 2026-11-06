@@ -12,6 +12,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/conf.d/accessreview.template
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
-ENV API_UPSTREAM=host.pasinduudana.me
+ENV API_UPSTREAM=api:8000
+ENV API_PROTOCOL=http
 EXPOSE 80
 ENTRYPOINT ["/start.sh"]
